@@ -38,7 +38,7 @@ app.post("/run-test", async (req, res) => {
 
     let browser;
     try {
-        browser = await playwright.chromium.launch({ headless: true, executablePath: playwright.chromium.executablePath() });
+        browser = await playwright.chromium.launch({ headless: false, executablePath: playwright.chromium.executablePath() });
         const context = await browser.newContext();
         const page = await context.newPage();
         await page.goto(url, { timeout: 30000 });
@@ -57,19 +57,20 @@ app.post("/run-test", async (req, res) => {
         const title = await page.title();
         const h2Elements = await page.$$eval("h2", elements => elements.map(el => el.textContent.trim()));
 
-        let screenshotPath = null;
-        if (expectedProducts && h2Elements.length !== parseInt(expectedProducts)) {
-            screenshotPath = path.join(screenshotsDir, `screenshot_${Date.now()}.png`);
-            await page.screenshot({ path: screenshotPath, fullPage: true });
-        }
+        // Sacar screenshot SIEMPRE
+        const screenshotPath = path.join(screenshotsDir, `screenshot_${Date.now()}.png`);
+        await page.screenshot({ path: screenshotPath, fullPage: true });
 
         await browser.close();
 
+        // Evaluar si coincide con lo esperado (opcional)
+        const success = !expectedProducts || h2Elements.length === parseInt(expectedProducts);
+
         res.json({
-            success: true,
+            success,
             title,
             h2Elements,
-            screenshot: screenshotPath ? `/screenshots/${path.basename(screenshotPath)}` : null,
+            screenshot: `/screenshots/${path.basename(screenshotPath)}`
         });
     } catch (error) {
         if (browser) await browser.close();
