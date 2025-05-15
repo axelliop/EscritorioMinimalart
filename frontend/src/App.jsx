@@ -23,7 +23,9 @@ const DISCOUNT_BADGE_COLORS = {
     "35% off": "danger",
     "40% off": "danger",
     "Hot Sale": "danger",
+    "Hot Week": "danger",
     "Sin TACC": "success",
+    "Label Aguila": "success",
     "Sin descuento": "secondary",
     "Descuento especial": "dark"
 };
