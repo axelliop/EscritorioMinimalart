@@ -112,6 +112,9 @@ async function extractProductsWithDiscounts(page) {
             '842109': 'Hot Sale',
             '845805': 'Hot Week',
             '1133533': 'Label Aguila',
+            '1011324': 'Label Chocolinas',
+            '948465': 'Label La Campagnola',
+            '94476': 'NUEVO',
             '84955': 'Sin TACC'
             
         };

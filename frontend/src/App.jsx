@@ -26,6 +26,9 @@ const DISCOUNT_BADGE_COLORS = {
     "Hot Week": "danger",
     "Sin TACC": "success",
     "Label Aguila": "success",
+    "Label Chocolinas": "success",
+    "Label La Campagnola": "success",
+    "NUEVO": "success",
     "Sin descuento": "secondary",
     "Descuento especial": "dark"
 };
