@@ -2,7 +2,7 @@ import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { motion } from "framer-motion";
 
-// Lista de H2s a excluir (mejor como constante fuera del componente)
+// Lista de H2s a excluir
 const EXCLUDED_H2S = [
     "Ingresá a tu cuenta",
     "Visitá nuestras categorías",
@@ -28,6 +28,7 @@ const DISCOUNT_BADGE_COLORS = {
     "Label Aguila": "success",
     "Label Chocolinas": "success",
     "Label La Campagnola": "success",
+    "Label Cofler": "success",
     "NUEVO": "success",
     "Sin descuento": "secondary",
     "Descuento especial": "dark"
@@ -74,7 +75,6 @@ export default function App() {
 
                         const data = await response.json();
                         
-                        // Filtramos productos excluidos y verificamos si hay discrepancia
                         const validProducts = data.h2Elements.filter(product => 
                             !EXCLUDED_H2S.includes(product.producto)
                         );
@@ -118,6 +118,14 @@ export default function App() {
         setTests([{ url: "", expectedProducts: "" }]);
         setResults([]);
     };
+
+    // Función para formatear precios
+const formatPrice = (price) => {
+    if (typeof price === 'number') {
+        return `$${price.toLocaleString('es-AR')}`;
+    }
+    return price;
+};
 
     return (
         <div className="container py-4">
@@ -230,27 +238,46 @@ export default function App() {
                                     <thead>
                                         <tr>
                                             <th>Producto</th>
-                                            <th className="text-end">Descuento</th>
+                                            <th>Precio Original</th>
+                                            <th>Precio Actual</th>
+                                            <th>Descuento</th>
+                                            <th>Validación</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                      {result.h2Elements.map((prod, i) => (
-    <tr key={i}>
-        <td>{prod.producto}</td>
-        <td className="text-end">
-            <div className="d-flex gap-1 justify-content-end">
-                {prod.descuentos.map((d, j) => (
-                    <span 
-                        key={j}
-                        className={`badge bg-${DISCOUNT_BADGE_COLORS[d] || "secondary"}`}
-                    >
-                        {d}
-                    </span>
-                ))}
-            </div>
-        </td>
-    </tr>
-))}
+                                        {result.h2Elements.map((prod, i) => (
+                                            <tr key={i}>
+                                                <td>{prod.producto}</td>
+                                                <td>{formatPrice(prod.precio_original)}</td>
+                                                <td>{formatPrice(prod.precio_actual)}</td>
+                                                <td>
+                                                    <div className="d-flex gap-1">
+                                                        {prod.descuentos.map((d, j) => (
+                                                            <span 
+                                                                key={j}
+                                                                className={`badge bg-${DISCOUNT_BADGE_COLORS[d] || "secondary"}`}
+                                                            >
+                                                                {d}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    {prod.validacion_descuento.includes('✅') ? (
+                                                        <span className="text-success">{prod.validacion_descuento}</span>
+                                                    ) : prod.validacion_descuento.includes('⚠️') ? (
+                                                        <span className="text-warning">{prod.validacion_descuento}</span>
+                                                    ) : (
+                                                        <span>{prod.validacion_descuento}</span>
+                                                    )}
+                                                    {prod.descuento_calculado !== "No disponible" && (
+                                                        <div className="small text-muted">
+                                                            Calculado: {prod.descuento_calculado}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             </div>

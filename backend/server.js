@@ -16,7 +16,6 @@ if (!fs.existsSync(screenshotsDir)) {
 const frontendBuildPath = path.join(__dirname, "..", "frontend", "dist");
 app.use(express.static(frontendBuildPath));
 
-
 const EXCLUDED_H2S = [
     "Ingresá a tu cuenta",
     "Visitá nuestras categorías",
@@ -46,13 +45,11 @@ app.post("/run-test", async (req, res) => {
             headless: false,
             executablePath: playwright.chromium.executablePath()
         });
-const context = await browser.newContext({
-    viewport: { width: 1920, height: 1080},
-});
+        const context = await browser.newContext({
+            viewport: { width: 1920, height: 1080 },
+        });
         const page = await context.newPage();
 
-
-        
         await page.goto(url, { timeout: 30000, waitUntil: 'domcontentloaded' });
         await page.waitForTimeout(5000);
 
@@ -67,7 +64,7 @@ const context = await browser.newContext({
         const screenshotFilename = `screenshot_${Date.now()}.png`;
         const screenshotPath = path.join(screenshotsDir, screenshotFilename);
         const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
-await page.setViewportSize({ width: 1920, height: bodyHeight });
+        await page.setViewportSize({ width: 1920, height: bodyHeight });
 
         await page.screenshot({ path: screenshotPath, fullPage: true });
 
@@ -92,8 +89,6 @@ await page.setViewportSize({ width: 1920, height: bodyHeight });
     }
 });
 
-
-
 async function extractProductsWithDiscounts(page) {
     return await page.evaluate(({ EXCLUDED_H2S }) => {
         const products = [];
@@ -112,12 +107,23 @@ async function extractProductsWithDiscounts(page) {
             '842109': 'Hot Sale',
             '845805': 'Hot Week',
             '1133533': 'Label Aguila',
-            '1011324': 'Label Chocolinas',
+            '1138149': 'Label Chocolinas',
+            '919414': 'Label Cofler',
             '948465': 'Label La Campagnola',
             '94476': 'NUEVO',
             '84955': 'Sin TACC'
-            
         };
+
+
+function extractPrice(priceText) {
+    if (!priceText) return null;
+    const numericValue = priceText
+        .replace(/[^\d.,]/g, "") // dejar solo números, puntos y comas
+        .replace(/\./g, "")      // eliminar todos los puntos (separador de miles)
+        .replace(",", ".");      // reemplazar la coma decimal por punto
+    return parseFloat(numericValue) || null;
+}
+
 
         function calcularDescuento(original, conDescuento) {
             if (!original || !conDescuento) return null;
@@ -125,12 +131,19 @@ async function extractProductsWithDiscounts(page) {
             return Math.round(porcentaje);
         }
 
+function formatPrice(value) {
+    if (value === null || value === undefined) return "No disponible";
+    return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value);
+}
+
+
         productTitles.forEach(h2 => {
             const productName = h2.textContent.trim();
             if (EXCLUDED_H2S.includes(productName)) return;
 
             const productContainer = h2.closest('.product, .product-card, li.product, article.product') || h2.parentElement;
 
+            // Extraer información de descuentos
             const discountDivs = productContainer.querySelectorAll('div[class*="br_alabel"]');
             const discounts = new Set();
 
@@ -142,58 +155,72 @@ async function extractProductsWithDiscounts(page) {
                 discounts.add(discount);
             });
 
-
-            
-            // Extraer precios
-            const priceElements = productContainer.querySelectorAll('.price del, .price ins, .price bdi');
+            // Extraer precios según la nueva estructura
+            const priceContainer = productContainer.querySelector('.price');
             let originalPrice = null;
-            let finalPrice = null;
+            let currentPrice = null;
+            let discountPercentage = null;
 
-            priceElements.forEach(el => {
-                const priceText = el.textContent.replace(/[^\d.,]/g, "").replace(",", ".");
-                const price = parseFloat(priceText);
-                if (!isNaN(price)) {
-                    if (el.tagName.toLowerCase() === "del") {
-                        originalPrice = price;
-                    } else if (el.tagName.toLowerCase() === "ins" || el.closest("ins")) {
-                        finalPrice = price;
-                    } else if (!originalPrice && !finalPrice) {
-                        finalPrice = price;
+            if (priceContainer) {
+                // Extraer de screen-reader-text si está disponible
+                const screenReaderTexts = priceContainer.querySelectorAll('.screen-reader-text');
+                
+                if (screenReaderTexts.length >= 2) {
+                    const originalText = screenReaderTexts[0].textContent;
+                    const currentText = screenReaderTexts[1].textContent;
+                    
+                    if (originalText.includes('Original price was:')) {
+                        originalPrice = extractPrice(originalText.split('$')[1]);
+                    }
+                    if (currentText.includes('Current price is:')) {
+                        currentPrice = extractPrice(currentText.split('$')[1]);
                     }
                 }
-            });
 
-            const calculatedDiscount = (originalPrice && finalPrice) ? calcularDescuento(originalPrice, finalPrice) : null;
-            let discountMatch = null;
+                // Si no encontramos en screen-reader, buscamos en del/ins
+                if (!originalPrice && priceContainer.querySelector('del')) {
+                    originalPrice = extractPrice(priceContainer.querySelector('del').textContent);
+                }
+                if (!currentPrice && priceContainer.querySelector('ins')) {
+                    currentPrice = extractPrice(priceContainer.querySelector('ins').textContent);
+                }
+                if (!currentPrice && priceContainer.querySelector('bdi')) {
+                    currentPrice = extractPrice(priceContainer.querySelector('bdi').textContent);
+                }
+
+                // Calcular porcentaje de descuento si tenemos ambos precios
+                if (originalPrice && currentPrice) {
+                    discountPercentage = calcularDescuento(originalPrice, currentPrice);
+                }
+            }
 
             // Validar si algún descuento coincide
-            if (calculatedDiscount) {
+            let discountMatch = null;
+            if (discountPercentage) {
                 discounts.forEach(d => {
                     const match = d.match(/(\d+)%/);
-                    if (match && parseInt(match[1]) === calculatedDiscount) {
-                        discountMatch = `${calculatedDiscount}% OK`;
+                    if (match && parseInt(match[1]) === discountPercentage) {
+                        discountMatch = `✅ ${discountPercentage}% coincide con etiqueta`;
                     }
                 });
                 if (!discountMatch) {
-                    discountMatch = `⚠️ ${calculatedDiscount}% calculado, no coincide con etiqueta`;
+                    discountMatch = `⚠️ ${discountPercentage}% calculado, no coincide con etiqueta`;
                 }
             }
 
             products.push({
                 producto: productName,
                 descuentos: discounts.size > 0 ? Array.from(discounts) : ['Sin descuento'],
-                precio_original: originalPrice ?? "No disponible",
-                precio_descuento: finalPrice ?? "No disponible",
-                descuento_calculado: calculatedDiscount ? `${calculatedDiscount}%` : "No disponible",
-                validación_descuento: discountMatch ?? "No aplica o sin coincidencia"
+precio_original: formatPrice(originalPrice),
+precio_actual: formatPrice(currentPrice),
+                descuento_calculado: discountPercentage ? `${discountPercentage}%` : "No disponible",
+                validacion_descuento: discountMatch || "No aplica o sin coincidencia"
             });
         });
 
         return products;
     }, { EXCLUDED_H2S });
 }
-
-
 
 app.use("/screenshots", express.static(screenshotsDir));
 
