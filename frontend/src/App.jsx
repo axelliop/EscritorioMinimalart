@@ -29,6 +29,8 @@ const DISCOUNT_BADGE_COLORS = {
     "Label Chocolinas": "success",
     "Label La Campagnola": "success",
     "Label Cofler": "success",
+    "Label Mogul Extreme": "success",
+    "Label BULTO": "success",
     "NUEVO": "success",
     "Sin descuento": "secondary",
     "Descuento especial": "dark"

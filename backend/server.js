@@ -109,8 +109,10 @@ async function extractProductsWithDiscounts(page) {
             '1133533': 'Label Aguila',
             '1138149': 'Label Chocolinas',
             '919414': 'Label Cofler',
+            '1010262': 'Label Mogul Extreme',
             '948465': 'Label La Campagnola',
             '94476': 'NUEVO',
+            '1140459': 'Label BULTO',
             '84955': 'Sin TACC'
         };
 

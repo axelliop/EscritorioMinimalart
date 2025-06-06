@@ -48,6 +48,7 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1024,
         height: 768,
+        icon: path.join(__dirname, "..", "build", "icon.ico"), // ← Agregado
         webPreferences: {
             contextIsolation: true,
             nodeIntegration: false,
@@ -63,6 +64,7 @@ function createWindow() {
 
     mainWindow.on("closed", () => (mainWindow = null));
 }
+
 
 // Cierra el backend al salir
 app.on("window-all-closed", () => {
