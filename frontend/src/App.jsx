@@ -2,7 +2,6 @@ import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { motion } from "framer-motion";
 
-// Lista de H2s a excluir
 const EXCLUDED_H2S = [
     "Ingresá a tu cuenta",
     "Visitá nuestras categorías",
@@ -12,7 +11,6 @@ const EXCLUDED_H2S = [
     "Inicio",
 ];
 
-// Mapeo de colores para los badges de descuento
 const DISCOUNT_BADGE_COLORS = {
     "10% off": "info",
     "15% off": "info",
@@ -42,7 +40,7 @@ export default function App() {
     const [loading, setLoading] = useState(false);
 
     const handleInputChange = (index, field, value) => {
-        const newTests = tests.map((test, i) => 
+        const newTests = tests.map((test, i) =>
             i === index ? { ...test, [field]: value } : test
         );
         setTests(newTests);
@@ -69,27 +67,27 @@ export default function App() {
                         const response = await fetch("http://localhost:5000/run-test", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ 
-                                url: test.url, 
-                                expectedProducts: test.expectedProducts 
+                            body: JSON.stringify({
+                                url: test.url,
+                                expectedProducts: test.expectedProducts
                             }),
                         });
 
                         const data = await response.json();
-                        
-                        const validProducts = data.h2Elements.filter(product => 
+
+                        const validProducts = data.h2Elements.filter(product =>
                             !EXCLUDED_H2S.includes(product.producto)
                         );
-                        
-                        const mismatch = test.expectedProducts && 
-                                       validProducts.length !== parseInt(test.expectedProducts);
-                        
+
+                        const mismatch = test.expectedProducts &&
+                            validProducts.length !== parseInt(test.expectedProducts);
+
                         return {
                             ...data,
                             h2Elements: validProducts,
                             index,
                             mismatch,
-                            alertMessage: mismatch 
+                            alertMessage: mismatch
                                 ? `⚠️ ¡Atención! Se esperaban ${test.expectedProducts} productos, pero se encontraron ${validProducts.length}.`
                                 : ""
                         };
@@ -121,13 +119,12 @@ export default function App() {
         setResults([]);
     };
 
-    // Función para formatear precios
-const formatPrice = (price) => {
-    if (typeof price === 'number') {
-        return `$${price.toLocaleString('es-AR')}`;
-    }
-    return price;
-};
+    const formatPrice = (price) => {
+        if (typeof price === 'number') {
+            return `$${price.toLocaleString('es-AR')}`;
+        }
+        return price;
+    };
 
     return (
         <div className="container py-4">
@@ -142,14 +139,14 @@ const formatPrice = (price) => {
 
             <div className="row">
                 {tests.map((test, index) => (
-                    <motion.div 
-                        key={index} 
+                    <motion.div
+                        key={index}
                         className="col-md-6 mb-3"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                        <div className="card p-3 shadow-sm h-100">
+                        <div className="card p-3 shadow-sm h-100 border border-2 border-light-subtle rounded-4">
                             <div className="mb-2">
                                 <label className="form-label">URL #{index + 1}</label>
                                 <input
@@ -171,8 +168,8 @@ const formatPrice = (price) => {
                                 />
                             </div>
                             {tests.length > 1 && (
-                                <button 
-                                    onClick={() => removeTest(index)} 
+                                <button
+                                    onClick={() => removeTest(index)}
                                     className="btn btn-sm btn-outline-danger mt-2"
                                 >
                                     Eliminar
@@ -183,13 +180,13 @@ const formatPrice = (price) => {
                 ))}
             </div>
 
-            <div className="d-flex gap-2 justify-content-center my-4">
-                <button onClick={addTest} className="btn btn-secondary">
+            <div className="d-flex flex-wrap gap-2 justify-content-center my-4">
+                <button onClick={addTest} className="btn btn-outline-secondary">
                     + Añadir URL
                 </button>
-                <button 
-                    onClick={runTests} 
-                    className="btn btn-info" 
+                <button
+                    onClick={runTests}
+                    className="btn btn-info"
                     disabled={loading || !tests.some(test => test.url)}
                 >
                     {loading ? (
@@ -199,7 +196,7 @@ const formatPrice = (price) => {
                         </>
                     ) : "Comenzar el test"}
                 </button>
-                <button onClick={clearResults} className="btn btn-dark">
+                <button onClick={clearResults} className="btn btn-outline-dark">
                     Borrar resultados
                 </button>
                 <button onClick={clearAll} className="btn btn-outline-danger">
@@ -208,35 +205,35 @@ const formatPrice = (price) => {
             </div>
 
             {results.length > 0 && (
-                <motion.div 
+                <motion.div
                     className="mt-4"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
                 >
                     {results.map((result, index) => (
-                        <motion.div 
-                            key={index} 
-                            className={`card p-3 mb-4 shadow-sm ${result.mismatch ? "border-danger" : "border-success"}`}
-                            whileHover={{ scale: 1.005 }}
+                        <motion.div
+                            key={index}
+                            className={`card p-3 mb-4 shadow-sm rounded-4 ${result.mismatch ? "border-danger border-2" : "border-success border-2"}`}
+                            whileHover={{ scale: 1.01 }}
                         >
-                            <h5 className="card-title d-flex justify-content-between">
+                            <h5 className="card-title d-flex justify-content-between align-items-center">
                                 <span>Test #{result.index + 1}: {result.title}</span>
                                 <span className="badge bg-light text-dark">
                                     {result.h2Elements.length} productos
                                 </span>
                             </h5>
-                            
+
                             {result.mismatch && (
                                 <div className="alert alert-warning d-flex align-items-center">
                                     <i className="bi bi-exclamation-triangle-fill me-2"></i>
                                     {result.alertMessage}
                                 </div>
                             )}
-                            
+
                             <h6 className="mb-3">Productos encontrados:</h6>
                             <div className="table-responsive">
-                                <table className="table table-hover">
+                                <table className="table table-hover align-middle">
                                     <thead>
                                         <tr>
                                             <th>Producto</th>
@@ -248,14 +245,14 @@ const formatPrice = (price) => {
                                     </thead>
                                     <tbody>
                                         {result.h2Elements.map((prod, i) => (
-                                            <tr key={i}>
-                                                <td>{prod.producto}</td>
+                                            <tr key={i} className={prod.validacion_descuento.includes("❌") ? "table-danger" : prod.validacion_descuento.includes("⚠️") ? "table-warning" : ""}>
+                                                <td className={prod.validacion_descuento.includes("❌") ? "fw-bold text-danger" : ""}>{prod.producto}</td>
                                                 <td>{formatPrice(prod.precio_original)}</td>
                                                 <td>{formatPrice(prod.precio_actual)}</td>
                                                 <td>
-                                                    <div className="d-flex gap-1">
+                                                    <div className="d-flex flex-wrap gap-1">
                                                         {prod.descuentos.map((d, j) => (
-                                                            <span 
+                                                            <span
                                                                 key={j}
                                                                 className={`badge bg-${DISCOUNT_BADGE_COLORS[d] || "secondary"}`}
                                                             >
@@ -270,7 +267,7 @@ const formatPrice = (price) => {
                                                     ) : prod.validacion_descuento.includes('⚠️') ? (
                                                         <span className="text-warning">{prod.validacion_descuento}</span>
                                                     ) : (
-                                                        <span>{prod.validacion_descuento}</span>
+                                                        <span className="text-danger">{prod.validacion_descuento}</span>
                                                     )}
                                                     {prod.descuento_calculado !== "No disponible" && (
                                                         <div className="small text-muted">
@@ -283,13 +280,13 @@ const formatPrice = (price) => {
                                     </tbody>
                                 </table>
                             </div>
-                            
+
                             {result.screenshot && (
                                 <div className="mt-3">
                                     <h6>Captura de pantalla:</h6>
-                                    <img 
-                                        src={`http://localhost:5000${result.screenshot}`} 
-                                        alt="Captura de pantalla" 
+                                    <img
+                                        src={`http://localhost:5000${result.screenshot}`}
+                                        alt="Captura de pantalla"
                                         className="img-fluid rounded border"
                                     />
                                 </div>

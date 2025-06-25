@@ -51,7 +51,7 @@ app.post("/run-test", async (req, res) => {
         const page = await context.newPage();
 
         await page.goto(url, { timeout: 30000, waitUntil: 'domcontentloaded' });
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(10000);
 
         const title = await page.title();
         const products = await extractProductsWithDiscounts(page);
